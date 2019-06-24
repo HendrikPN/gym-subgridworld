@@ -1,0 +1,1 @@
+from gym_subgridworld.envs.subgridworld_env import SubGridWorldEnv
