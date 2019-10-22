@@ -24,14 +24,14 @@ the reward is positioned in the corner of the same plane.
 We provide two methods that may simplify the environment by simplifying the
 observation. By default, the observation is a 3D pixel image.
 
-    + `simplify_observation()`: This function provides the observation 
-                                represented by a vector of length N x M x L
-                                with three 1's at positions 
-                                (x, N + y, N + M + z) where (x,y,z) is the 
++ `simplify_observation()`: This function provides the observation 
+                            represented by a vector of length N x M x L
+                            with three 1's at positions 
+                            (x, N + y, N + M + z) where (x,y,z) is the 
                                 position of the agent.
-    + `idealize_observation(): This function provies an ideal observation,
-                               i.e. the vector (x,y,z) which represents the
-                               position of the agent.
++ `idealize_observation()`: This function provies an ideal observation,
+                           i.e. the vector (x,y,z) which represents the
+                           position of the agent.
 
 # Installation
 
