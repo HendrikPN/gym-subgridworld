@@ -46,7 +46,7 @@ class SubGridWorldEnv(gym.Env):
         if 'plane' in kwargs and type(kwargs['plane']) is list:
             setattr(self, '_plane', kwargs['plane'])
         else:
-            setattr(self, 'plane', [1,1,0])
+            setattr(self, '_plane', [1,1,0])
         if 'max_steps' in kwargs and type(kwargs['max_steps']) is int:
             setattr(self, '_max_steps', kwargs['max_steps'])
         else:
@@ -91,7 +91,7 @@ class SubGridWorldEnv(gym.Env):
                             for i, v in enumerate(self._plane)]
 
         for index, v in enumerate(self._grid_size):
-            if self._plane[index]:
+            if self._plane[index] and len(self._walls_coord) > 0:
                 if (v-1) in np.array(self._walls_coord)[:, index]:
                     raise ValueError('There cannot be walls at the border of '+ 
                                      'the grid in the plane where the reward '+ 
