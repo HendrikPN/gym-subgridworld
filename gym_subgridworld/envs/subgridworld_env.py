@@ -294,14 +294,17 @@ class SubGridWorldEnv(gym.Env):
         end_pos = list(np.delete(end_pos, dim_remove, 0))
 
         # Runs the A* algorithm.
-        a_star_alg = AStar()
-        a_star_alg.init_grid(self._grid_size[dim_keep[0]], 
-                             self._grid_size[dim_keep[0]], 
-                             walls, 
-                             start_pos, 
-                             end_pos
-                            )
-        optimal_path = a_star_alg.solve()
+        if end_pos != start_pos:
+            a_star_alg = AStar()
+            a_star_alg.init_grid(self._grid_size[dim_keep[0]], 
+                                self._grid_size[dim_keep[0]], 
+                                walls, 
+                                start_pos, 
+                                end_pos
+                                )
+            optimal_path = a_star_alg.solve()
+        else:
+            optimal_path = []
 
         return optimal_path
 
