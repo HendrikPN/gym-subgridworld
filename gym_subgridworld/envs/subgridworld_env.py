@@ -5,6 +5,8 @@ import typing
 from typing import List, Tuple
 import cv2
 
+from gym_subgridworld.utils.a_star_path_finding import AStar 
+
 class SubGridWorldEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -89,14 +91,6 @@ class SubGridWorldEnv(gym.Env):
         #list of int: The position of the reward. Not initial position.
         self._reward_pos = [v * (self._grid_size[i] - 1) 
                             for i, v in enumerate(self._plane)]
-
-        for index, v in enumerate(self._grid_size):
-            if self._plane[index] and len(self._walls_coord) > 0:
-                if (v-1) in np.array(self._walls_coord)[:, index]:
-                    raise ValueError('There cannot be walls at the border of '+ 
-                                     'the grid in the plane where the reward '+ 
-                                     'is located.'
-                                     )
         
         #function: Sets the static part of the observed image, i.e. walls.
         self._get_static_image()
@@ -275,7 +269,42 @@ class SubGridWorldEnv(gym.Env):
 
         observation = np.concatenate((x_dim, y_dim, z_dim))
         return observation
- 
+
+    def get_optimal_path(self):
+        """
+        Calculates the optimal path for the current position of the agent
+        using the A* search algorithm.
+        
+        Returns:
+            optimal_path (`list` of `tuple`): The optimal path of 2D positions.
+        """
+        # Reduces to 2D gridworld.
+        dim_keep = np.array(self._plane).nonzero()[0]
+        dim_remove = np.asarray(np.array(
+                                self._plane, 
+                                copy=False) == 0).nonzero()[0].item(0)
+        walls = []
+        if len(self._walls_coord) > 0:
+            walls = np.array(self._walls_coord)
+            walls = np.delete(walls, dim_remove, 1)
+            walls = list(map(tuple, walls))
+        start_pos = np.array(self._agent_pos)
+        start_pos = list(np.delete(start_pos, dim_remove, 0))
+        end_pos = np.array(self._reward_pos)
+        end_pos = list(np.delete(end_pos, dim_remove, 0))
+
+        # Runs the A* algorithm.
+        a_star_alg = AStar()
+        a_star_alg.init_grid(self._grid_size[dim_keep[0]], 
+                             self._grid_size[dim_keep[0]], 
+                             walls, 
+                             start_pos, 
+                             end_pos
+                            )
+        optimal_path = a_star_alg.solve()
+
+        return optimal_path
+
     # ----------------- helper methods -----------------------------------------
 
     def _get_static_image(self) -> None:

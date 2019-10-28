@@ -33,6 +33,14 @@ observation. By default, the observation is a 3D pixel image.
                            i.e. the vector (x,y,z) which represents the
                            position of the agent.
 
+## Additional methods
+
+Additional methods can provide you with helpful information about the current 
+state of the environment.
+
++ `get_optimal_path()`: This function generates an optimal path to the reward 
+                        on the relevant 2D subgrid.
+
 # Installation
 
 ```
