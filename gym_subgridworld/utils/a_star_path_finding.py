@@ -60,6 +60,7 @@ class AStar(object):
                     reachable = True
                 self.cells.append(Cell(x, y, reachable))
         self.start = self.get_cell(*start)
+        self.start.reachable=True
         self.end = self.get_cell(*end)
 
     def get_heuristic(self, cell):

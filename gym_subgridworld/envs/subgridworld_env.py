@@ -10,7 +10,7 @@ from gym_subgridworld.utils.a_star_path_finding import AStar
 class SubGridWorldEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, **kwargs):
+    def __init__(self, random_grid=False, **kwargs):
         """
         This environment is a N x M x L gridworld with walls where the optimal 
         policy requires only knowledge of a 2D subspace, e.g. the (x,y)-plane. 
@@ -29,6 +29,9 @@ class SubGridWorldEnv(gym.Env):
         throughout the dimension orthorgonal to the specified plane.
 
         Args:
+            random_grid (bool): Whether or not to create a randomized grid.
+                                Defaults to False.
+
             **kwargs:
                 grid_size (:obj:`list` of :obj:`int`): The size of the grid. 
                                                        Defaults to [50, 50, 50].
@@ -85,11 +88,13 @@ class SubGridWorldEnv(gym.Env):
 
         #list: The coordinates of the walls throughout the 3D gridworld.
         self._walls_coord = self._expand_walls()
+        if random_grid:
+            self.generate_random_walls()
 
         #list of int: The current position of the agent. Not initial position.
         self._agent_pos = [0, 0, 0]
         #list of int: The position of the reward. Not initial position.
-        self._reward_pos = [v * (self._grid_size[i] - 1) 
+        self._reward_pos = [v * int((self._grid_size[i])/2.)
                             for i, v in enumerate(self._plane)]
         
         #function: Sets the static part of the observed image, i.e. walls.
@@ -173,8 +178,9 @@ class SubGridWorldEnv(gym.Env):
 
     def reset(self) -> np.ndarray:
         """
-        Agent is reset to a random position in the cube. 
-        Reward is placed in the corner of the respective plane.
+        Agent is reset to a random position in the cube from where it can reach
+        the reward. 
+        Reward is placed in the center of the respective plane.
 
         Returns:
             observation (numpy.ndarray): An array representing the current and 
@@ -187,7 +193,8 @@ class SubGridWorldEnv(gym.Env):
         self._agent_pos = [0, 0, 0]
         self._reward_pos = [0 ,0 ,0]
 
-        while self._agent_pos == self._reward_pos:
+        is_valid_pos = False
+        while self._agent_pos == self._reward_pos and not is_valid_pos:
             # Place the agent randomly within the cube.
             for i in range(3):
                 self._agent_pos[i] = np.random.choice(range(self._grid_size[i]))
@@ -196,12 +203,15 @@ class SubGridWorldEnv(gym.Env):
                     choices = range(self._grid_size[i])
                     self._agent_pos[i] = np.random.choice(choices)
             
-            # Place reward in the top corner of the same plane as the agent.
+            # Place reward in the center of the same plane as the agent.
             for index, v in enumerate(self._plane):
                 if v:
-                    self._reward_pos[index] = self._grid_size[index] - 1 
+                    self._reward_pos[index] = int((self._grid_size[index])/2.) 
                 else:
                     self._reward_pos[index] = self._agent_pos[index]
+
+            # Check whether there exists a path to the reward.
+            is_valid_pos = self.get_optimal_path() is not None 
 
         # Create initial image.
         self._img = self._get_image()
@@ -307,6 +317,33 @@ class SubGridWorldEnv(gym.Env):
             optimal_path = []
 
         return optimal_path
+
+    def generate_random_walls(self, prob=0.3) -> None:
+        """
+        Clears the current set of walls and generates walls at random.
+
+        TODO: It needs to be checked that the reward is not surrounder by walls.
+
+        Args:
+            prob (float): Probability of placing a a wall at any given point
+                          in the plane. Defaults to 0.3.
+        """
+
+        # Reset walls
+        dim_keep = np.array(self._plane).nonzero()[0]
+        self._walls_coord = []
+        self._plane_walls = []
+
+        # Place walls at random.
+        for i in range(self._grid_size[dim_keep[0]]):
+            for j in range(self._grid_size[dim_keep[1]]):
+                if not (i == int(self._grid_size[dim_keep[0]]/2.) 
+                        and j == int(self._grid_size[dim_keep[1]]/2.)):
+                    choice = np.random.choice(2, 1, p=[1-prob, prob])[0]
+                    if choice:
+                        self._plane_walls.append([i,j])
+        self._walls_coord = self._expand_walls()
+                     
 
     # ----------------- helper methods -----------------------------------------
 
