@@ -11,7 +11,7 @@ class SubGridWorldEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, random_grid=False, check_valid=True, 
-                 check_valid_run=False, **kwargs):
+                 check_valid_run=True, **kwargs):
         """
         This environment is a N x M x L gridworld with walls where the optimal 
         policy requires only knowledge of a 2D subspace, e.g. the (x,y)-plane. 
@@ -32,8 +32,8 @@ class SubGridWorldEnv(gym.Env):
         or (iii) not at all. For larger grids, it is recommended to choose
         (iii) over (ii) and (ii) over (i). 
 
-            (i) check_valid = True (default)
-            (ii) check_valid_run = True
+            (i) check_valid = True
+            (ii) check_valid_run = True (default) [overwrites (i)]
             (iii) check_valid = False and check_valid_run = False
 
         If check_valid is True and you choose to generate a random grid, 
@@ -50,10 +50,10 @@ class SubGridWorldEnv(gym.Env):
             check_valid (bool): Whether or not to run A* algorithm to check
                                 that a grid has enough paths to the 
                                 reward at the beginning. This may be 
-                                computationally expensive. Defaults to True.
+                                computationally expensive. Defaults to False.
             check_valid_run (bool): Overwrites `check_valid` and checks 
                                     validity at runtime, i.e. at each reset.
-                                    Defaults to False.
+                                    Defaults to True.
 
             **kwargs:
                 grid_size (:obj:`list` of :obj:`int`): The size of the grid. 
@@ -264,6 +264,8 @@ class SubGridWorldEnv(gym.Env):
             elif self.check_valid:
                 plane_pos = np.delete(self._agent_pos, self._dim_expand, 0)
                 is_valid_pos = list(plane_pos) in self._valid_pos
+            else:
+                is_valid_pos = True
                 
 
         # Create initial image.
