@@ -22,7 +22,7 @@ class SubGridWorldEnv(gym.Env):
         reward has been obtained or the maximum number of steps is exceeded.
         By default there is no restriction to the number of steps.
         At each reset, the agent is moved to a random position in the cube and 
-        the reward is positioned in the corner of the same plane.
+        the reward is placed at a specified position of the same plane.
 
         NOTE:
 
