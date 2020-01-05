@@ -10,12 +10,12 @@ from gym_subgridworld.utils.a_star_path_finding import AStar
 class SubGridWorldEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, random_grid=False, check_valid=True, 
-                 check_valid_run=True, **kwargs):
+    def __init__(self, hardmode=False, random_grid=False, check_valid=False, 
+                 check_valid_run=False, **kwargs):
         """
         This environment is a N x M x L gridworld with walls where the optimal 
         policy requires only knowledge of a 2D subspace, e.g. the (x,y)-plane. 
-        The agent perceives the whole world and its position in it. 
+        The agent perceives the world w/o walls and its position in it. 
         It does not see the reward, which is fixed to a given position in the 
         same plane as the agent's starting position. The agents goal is to find
         the reward within the minimum number of steps. An episode ends if the
@@ -26,15 +26,21 @@ class SubGridWorldEnv(gym.Env):
 
         NOTE:
 
+        You can make the environment harder by setting harmode to True. Then,
+        the observation will be an image. By default, the observation is an
+        N + M + L list of mostly zeros with ones at positions x, N+y and N+M+z 
+        where (x,y,z) describe the position of the agent.
+
         You can create your own grid or a randomized version. You can also 
         choose whether or not you want an A* algorithm to (i) check for valid
         positions at the beginning for each grid point, or (ii) at each reset,
-        or (iii) not at all. For larger grids, it is recommended to choose
-        (iii) over (ii) and (ii) over (i). 
+        or (iii) not at all. Default is (iii). 
+        For larger grids, it is recommended to choose (iii) over (ii) and 
+        (ii) over (i).
 
             (i) check_valid = True
-            (ii) check_valid_run = True (default) [overwrites (i)]
-            (iii) check_valid = False and check_valid_run = False
+            (ii) check_valid_run = True [overwrites (i)]
+            (iii) check_valid = False and check_valid_run = False (default)
 
         If check_valid is True and you choose to generate a random grid, 
         it will try to rebuild the grid until the number of valid positions is 
@@ -45,7 +51,10 @@ class SubGridWorldEnv(gym.Env):
         throughout the dimension orthorgonal to the specified plane.
 
         Args:
-            random_grid (bool): Whether or not to create a randomized grid.
+            hardmode (bool): Whether or not to create an image as observation.
+                             Defaults to False.
+            random_grid (bool): Whether or not to create a randomized grid for
+                                each instantiation of the environment.
                                 Defaults to False.
             check_valid (bool): Whether or not to run A* algorithm to check
                                 that a grid has enough paths to the 
@@ -53,7 +62,7 @@ class SubGridWorldEnv(gym.Env):
                                 computationally expensive. Defaults to False.
             check_valid_run (bool): Overwrites `check_valid` and checks 
                                     validity at runtime, i.e. at each reset.
-                                    Defaults to True.
+                                    Defaults to False.
 
             **kwargs:
                 grid_size (:obj:`list` of :obj:`int`): The size of the grid. 
@@ -108,6 +117,7 @@ class SubGridWorldEnv(gym.Env):
             raise ValueError('The reward is located in a wall: '+
                              f'{self._reward_pos_plane}.')
         
+        self.hardmode = hardmode
         self.check_valid = check_valid
         self.check_valid_run = check_valid_run
 
@@ -224,6 +234,9 @@ class SubGridWorldEnv(gym.Env):
         self._img = self._get_image()
         observation = self._get_observation()
 
+        if not self.hardmode:
+            observation = self.simplify_observation()
+
         return (observation, reward, done)
 
     def reset(self) -> np.ndarray:
@@ -268,10 +281,14 @@ class SubGridWorldEnv(gym.Env):
                 is_valid_pos = True
                 
 
-        # Create initial image.
+        # Create initial image and observation.
         self._img = self._get_image()
+        observation = self._get_observation()
 
-        return self._get_observation()
+        if not self.hardmode:
+            observation = self.simplify_observation()
+
+        return observation
 
     def render(self, mode: str ='human') -> None:
         """
@@ -367,7 +384,7 @@ class SubGridWorldEnv(gym.Env):
 
         return optimal_path
 
-    def generate_random_walls(self, prob=0.3, max_ratio=0.2) -> None:
+    def generate_random_walls(self, prob=0.2, max_ratio=0.01) -> None:
         """
         Clears the current set of walls and generates walls at random.
         If check_valid is True the process is repeated until the ratio of 
@@ -489,7 +506,7 @@ class SubGridWorldEnv(gym.Env):
 
     def _get_observation(self) -> np.ndarray:
         """
-        Generates an observation from two sequenced images.
+        Generates an observation from an image.
 
         Returns:
             observation (numpy.ndarray): An 1 x (grid_size * 7) ** 3 array of 

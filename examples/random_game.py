@@ -19,7 +19,7 @@ ENV_PARAMS = {"grid_size": [10, 10, 10],
               "max_steps": 400,
               'reward_pos': [9,9]}
 
-env = SubGridWorldEnv(random_grid=False, check_valid_run=False, **ENV_PARAMS)
+env = SubGridWorldEnv(random_grid=False, **ENV_PARAMS)
 
 # Play a few episodes of a random game and render.
 for i in range(10):

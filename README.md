@@ -10,7 +10,7 @@ policy for standardized RL environments.
 
 This environment is a N x M x L gridworld with walls where the optimal 
 policy requires only knowledge of a 2D subspace, e.g. the (x,y)-plane. 
-The agent perceives the whole world and its position in it. 
+The agent perceives the world w/o walls and its position in it. 
 It does not see the reward, which is fixed to a given position in the 
 same plane as the agent's starting position. The agents goal is to find
 the reward within the minimum number of steps. An episode ends if the
@@ -19,16 +19,24 @@ By default there is no restriction to the number of steps.
 At each reset, the agent is moved to a random position in the cube and 
 the reward is placed at a specified position of the same plane.
 
+Technically, the environment is a partially observable Markov decision process
+(POMDP) since the agent needs additional information (the position of its
+initial plane) to reduce the problem to an MDP. However, there exists an MDP
+in the initial plane which can still be *solved* by a conventional reinforcement
+learning agent.
+
 ## Simplifications
 
 We provide two methods that may simplify the environment by simplifying the
-observation. By default, the observation is a 3D pixel image.
+observation. By default the environment is *simplified*, but not *idealized*.
+You can set `hardmode` to `True` when instantiating the environment to receive
+an N x M x L image as observation.
 
 + `simplify_observation()`: This function provides the observation 
                             represented by a vector of length N x M x L
                             with three 1's at positions 
                             (x, N + y, N + M + z) where (x,y,z) is the 
-                                position of the agent.
+                            position of the agent.
 + `idealize_observation()`: This function provies an ideal observation,
                            i.e. the vector (x,y,z) which represents the
                            position of the agent.
